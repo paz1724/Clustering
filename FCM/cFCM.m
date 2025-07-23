@@ -1,4 +1,4 @@
-classdef cFCM < handle
+classdef cFCM < cClusterer
     %FCMCLUSTERER  Fuzzy C-Means clustering with auto-selection and outlier removal
     %
     % Tunable Properties:
@@ -47,16 +47,6 @@ classdef cFCM < handle
     end
 
     %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
-    %% ~~~~~~~~~~~~ Private Properties ~~~~~~~~~~~~~ %%
-    %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
-    properties (SetAccess=private)
-        centers
-        labels
-        cleanLabels
-        outlierIdx
-    end
-
-    %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
     %% ~~~~~~~~~~~~~~~~~ Methods ~~~~~~~~~~~~~~~~~~~ %%
     %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
     methods
@@ -96,87 +86,6 @@ classdef cFCM < handle
             %% Remove_outlier_classes
             obj.Remove_outlier_classes();
 
-        end
-
-        %% ~~~~~~~~~~~~~~~ plotResults ~~~~~~~~~~~~~~~ %%
-        function Plot_results(obj, X, gtMeans, seed)
-            %PLOTRESULTS  Show raw vs. pruned clustering
-            if isempty(obj.labels)
-                error('Call fit(X) first.');
-            end
-            c = obj.numClusters;
-            cols = lines(c);
-
-            figure;
-
-            %% Plot Raw
-            subplot(1,2,1);
-            hold on;
-            grid minor;
-
-            %% Scatter GT
-            scatter(gtMeans(:,1), gtMeans(:,2), 100, 'k', 'Marker', 's','LineWidth',1.5);
-
-            for k=1:c
-                scatter(X(obj.labels==k,1), X(obj.labels==k,2), 36, cols(k,:), 'filled');
-                cnt = sum(obj.labels==k);
-                if cnt==0
-                    marker = 'x';
-                else
-                    marker = '*';
-                end
-                scatter(obj.centers(k,1), obj.centers(k,2), 100, cols(k,:), 'Marker', marker,'LineWidth',1.5);
-            end
-            legend([{'GT'},arrayfun(@(k)sprintf('C%d',ceil(k/2)),1:2*c,'uni',false),{'Centers'}], ...
-                'Location','BestOutside');
-            hold off;
-
-            % build multiline title: heading + centers
-            info = cell(c+1,1);
-            info{1} = 'FCM (raw)';
-            for k=1:c
-                cnt = sum(obj.labels==k);
-                ctr = obj.centers(k,:);
-                info{k+1} = sprintf('C%d Center = (%.2f, %.2f) --> n = %d', k, ctr(1), ctr(2), cnt);
-            end
-            title(info, 'Interpreter','none');
-
-            %% Plot Pruned
-            subplot(1,2,2);
-            hold on;
-            grid minor;
-
-            %% Scatter GT
-            scatter(gtMeans(:,1), gtMeans(:,2), 100, 'k', 'Marker', 's','LineWidth',1.5);
- 
-            for k=1:c
-                scatter(X(obj.cleanLabels==k,1), X(obj.cleanLabels==k,2), 36, cols(k,:), 'filled');
-
-                cnt = sum(obj.cleanLabels==k);
-                if cnt==0
-                    marker = 'x';
-                else
-                    marker = '*';
-                end
-                scatter(obj.centers(k,1), obj.centers(k,2), 100, cols(k,:), 'Marker', marker,'LineWidth',1.5);
-            end
-            scatter(X(obj.outlierIdx,1), X(obj.outlierIdx,2), 36, [.5 .5 .5], 'x');
-
-            legend([{'GT'},arrayfun(@(k)sprintf('C%d',ceil(k/2)),1:2*c,'uni',false),{'Outliers','Centers'}], ...
-                'Location','BestOutside');
-            hold off;
-
-            % Cluster info: center and count per cluster, one row each
-            info = cell(1,1);
-            for k=1:c
-                cnt = sum(obj.cleanLabels==k);
-                ctr = obj.centers(k,:);
-                info{k,1} = sprintf('C%d: Center = (%.2f,%.2f) --> n = %d', k, ctr(1), ctr(2), cnt);
-            end
-            titleList = vertcat({'FCM (Pruned)';"Seed: "+seed},info);
-            title(titleList, 'Interpreter','none');
-
-            plotbrowser('on');
         end
 
     end
